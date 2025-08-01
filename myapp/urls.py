@@ -1,7 +1,8 @@
-from django.urls import path
-from myapp.views import *
+
+from django.urls import path,include
+
 
 
 urlpatterns = [
-
+    
 ]

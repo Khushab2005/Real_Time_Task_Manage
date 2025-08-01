@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'myapp', 
+    'myapp',  # replace with your app name
 ]
 
 MIDDLEWARE = [
@@ -68,6 +68,7 @@ TEMPLATES = [
         },
     },
 ]
+AUTH_USER_MODEL = 'myapp.CustomUser'
 
 WSGI_APPLICATION = 'project.wsgi.application'
 
