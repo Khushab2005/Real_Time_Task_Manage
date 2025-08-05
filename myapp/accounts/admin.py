@@ -9,7 +9,7 @@ class UserAdmin(admin.ModelAdmin):
     list_per_page = 3
     fieldsets = (
         ('User Information', {
-            'fields': ('name', 'email', 'role')
+            'fields': ('name','profile', 'email', 'role')
         }),
         ('Permissions', {
             'fields': ('is_staff', 'is_active')
