@@ -13,7 +13,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['name', 'email', 'password', 'role']
+        fields = ['name','profile', 'email', 'password', 'role']
 
     def validate(self, attrs):
         request_user = self.context['request'].user
