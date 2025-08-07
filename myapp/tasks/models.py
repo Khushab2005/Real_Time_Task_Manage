@@ -4,9 +4,23 @@ from myapp.tasks.constants import PriorityChoice , StatusChoice
 import os
 # Create your models here.
 
-# Task Model
+
+# ----------------
+# Function to define upload path for task files
+# ----------------
+def upload_path1(instance, filename):
+    name1 = instance.title.replace(" ", "_")
+    ext = filename.split('.')[-1]
+    new_filename = f"{name1}.{ext}"
+    return os.path.join("Task_files", name1, new_filename)    
+
+
+# ----------------
+# Task Model 
+# ----------------
 class Task(models.Model):
     title = models.CharField(max_length=255)
+    file_of_task = models.FileField(upload_to=upload_path1, blank=True, null=True)
     description = models.TextField()
     due_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -18,19 +32,23 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+    
+# ----------------
+# Upload Path Function for attach_file  
+# ----------------
 
-# Upload Path Function for FileField  
 def upload_path(instance, filename):
     name1 = instance.created_by.name.replace(" ", "_")
     ext = filename.split('.')[-1]
     new_filename = f"{name1}.{ext}"
     return os.path.join("Task_Attachment", name1, new_filename)    
 
-
-# Attachment Model
+# ----------------
+# Attachment Model 
+# ----------------
 class Attachment(models.Model):
     task = models.ForeignKey(Task, related_name='attachments', on_delete=models.CASCADE)
-    file = models.FileField(upload_to=upload_path, blank=True, null=True)
+    attach_file = models.FileField(upload_to=upload_path, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, related_name='attachments_received', on_delete=models.CASCADE)
 
