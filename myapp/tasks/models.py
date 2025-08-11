@@ -8,11 +8,11 @@ import os
 # ----------------
 # Function to define upload path for task files
 # ----------------
-def upload_path1(instance, filename):
-    name1 = instance.title.replace(" ", "_")
+def task_file_upload_path_title(instance, filename):
+    name = instance.title.replace(" ", "_")
     ext = filename.split('.')[-1]
-    new_filename = f"{name1}.{ext}"
-    return os.path.join("Task_files", name1, new_filename)    
+    new_filename = f"{name}.{ext}"
+    return os.path.join("Task_files", name, new_filename)    
 
 
 # ----------------
@@ -20,7 +20,7 @@ def upload_path1(instance, filename):
 # ----------------
 class Task(models.Model):
     title = models.CharField(max_length=255,unique=True)
-    file_of_task = models.FileField(upload_to=upload_path1, blank=True, null=True)
+    file_of_task = models.FileField(upload_to=task_file_upload_path_title, blank=True, null=True)
     description = models.TextField()
     due_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -37,18 +37,18 @@ class Task(models.Model):
 # Upload Path Function for attach_file  
 # ----------------
 
-def upload_path(instance, filename):
-    name1 = instance.created_by.name.replace(" ", "_")
+def task_file_upload_path_name(instance, filename):
+    name = instance.created_by.name.replace(" ", "_")
     ext = filename.split('.')[-1]
-    new_filename = f"{name1}.{ext}"
-    return os.path.join("Task_Attachment", name1, new_filename)    
+    new_filename = f"{name}.{ext}"
+    return os.path.join("Task_Attachment", name, new_filename)    
 
 # ----------------
 # Attachment Model 
 # ----------------
 class Attachment(models.Model):
     task = models.ForeignKey(Task, related_name='attachments', on_delete=models.CASCADE)
-    attach_file = models.FileField(upload_to=upload_path, blank=True, null=True)
+    attach_file = models.FileField(upload_to=task_file_upload_path_name, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, related_name='attachments_received', on_delete=models.CASCADE)
 

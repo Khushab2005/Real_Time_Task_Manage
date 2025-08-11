@@ -11,5 +11,5 @@ urlpatterns = [
     path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),
     path('password-reset/', PasswordResetRequestView.as_view(), name='password-reset'),
     path('password-reset/confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
-    path('delete_user/<int:pk>/', DeleteUserView.as_view(), name='delete-user'),
+    path('delete-user/<int:pk>/', DeleteUserView.as_view(), name='delete-user'),
 ]
