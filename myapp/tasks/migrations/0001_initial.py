@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
             name='Attachment',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('file', models.FileField(blank=True, null=True, upload_to=myapp.tasks.models.upload_path)),
+                ('file', models.FileField(blank=True, null=True, upload_to=myapp.tasks.models.task_file_upload_path_title)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='attachments_received', to=settings.AUTH_USER_MODEL)),
                 ('uploaded_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='uploaded_attachments', to=settings.AUTH_USER_MODEL)),
