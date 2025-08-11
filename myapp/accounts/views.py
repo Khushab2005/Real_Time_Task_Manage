@@ -14,9 +14,10 @@ from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
 from django.core.mail import send_mail
 from django.utils.encoding import force_bytes
+from myapp.accounts.constants import Rolechoice
 
 
-
+# Create User View
 class CreateUserView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -24,9 +25,23 @@ class CreateUserView(APIView):
         serializer = UserCreateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
-            return Response({"msg": "User created successfully."}, status=status.HTTP_200_OK)
+            return Response({"msg": "link sent to email"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+# Delete User View
+class DeleteUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        if request.user.role != Rolechoice.ADMIN:
+                return Response({"error": "You do not have permission to delete users."}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            user = User.objects.get(pk=pk)
+            user.delete()
+            return Response({"msg": "User deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
 #Verify Email View
 class VerifyEmailView(APIView):
@@ -58,10 +73,15 @@ class VerifyEmailView(APIView):
 #login View
 class LoginView(APIView):
     permission_classes =[AllowAny]
-    
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
+
+        cache_key = f"user_{email}"
+        cached_data = cache.get(cache_key)
+
+        if cached_data:
+            return Response(cached_data, status=status.HTTP_200_OK)
 
         try:
             user = User.objects.get(email=email)
@@ -73,20 +93,15 @@ class LoginView(APIView):
 
         if not user.is_active:
             return Response({"error": "Email not verified"},  status=status.HTTP_401_UNAUTHORIZED)
-        
-        cache_key = f"user_{user.email}"
-        if cache.get(cache_key):
-            cache.delete(cache_key) 
 
         refresh = RefreshToken.for_user(user)
-        
         data = {
             "refresh": str(refresh),
             "access": str(refresh.access_token),
             "role": user.role
         }
-        cache.set(cache_key, data , timeout=60 * 2)
 
+        cache.set(cache_key, data, timeout=60 * 2)
         return Response(data, status=status.HTTP_200_OK)
 
 #profile View
