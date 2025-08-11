@@ -19,7 +19,7 @@ def upload_path1(instance, filename):
 # Task Model 
 # ----------------
 class Task(models.Model):
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255,unique=True)
     file_of_task = models.FileField(upload_to=upload_path1, blank=True, null=True)
     description = models.TextField()
     due_date = models.DateField()

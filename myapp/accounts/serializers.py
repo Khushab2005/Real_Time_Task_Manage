@@ -54,6 +54,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
             recipient_list=[user.email],
         )
 
+
+# password Reset Request Serializer
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 

@@ -14,9 +14,10 @@ from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
 from django.core.mail import send_mail
 from django.utils.encoding import force_bytes
+from myapp.accounts.constants import Rolechoice
 
 
-
+# Create User View
 class CreateUserView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -27,6 +28,20 @@ class CreateUserView(APIView):
             return Response({"msg": "User created successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+# Delete User View
+class DeleteUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        if request.user.role != Rolechoice.ADMIN:
+                return Response({"error": "You do not have permission to delete users."}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            user = User.objects.get(pk=pk)
+            user.delete()
+            return Response({"msg": "User deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
 #Verify Email View
 class VerifyEmailView(APIView):
