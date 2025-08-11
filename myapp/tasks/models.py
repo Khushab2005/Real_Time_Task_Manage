@@ -1,6 +1,5 @@
 from django.db import models
 from myapp.accounts.models import User
-<<<<<<< Updated upstream
 from myapp.tasks.constants import PriorityChoice , StatusChoice
 import os
 # Create your models here.
@@ -22,19 +21,18 @@ def task_file_upload_path_title(instance, filename):
 class Task(models.Model):
     title = models.CharField(max_length=255,unique=True)
     file_of_task = models.FileField(upload_to=task_file_upload_path_title, blank=True, null=True)
-=======
+
 from myapp.tasks.constants import PriorityChoice, StatusChoice
 import os
 # Create your models here.
 
 class Task(models.Model):
     title = models.CharField(max_length=255)
->>>>>>> Stashed changes
+
     description = models.TextField()
     due_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-<<<<<<< Updated upstream
     priority = models.CharField(max_length=15, choices=PriorityChoice, default=PriorityChoice.LOW)
     status = models.CharField(max_length=15, choices=StatusChoice, default=StatusChoice.PENDING)
     assigned_to = models.ForeignKey(User, related_name='assigned_tasks', on_delete=models.CASCADE  )
@@ -61,9 +59,6 @@ class Attachment(models.Model):
     attach_file = models.FileField(upload_to=task_file_upload_path_name, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, related_name='attachments_received', on_delete=models.CASCADE)
-
-
-=======
     priority = models.CharField(max_length=15,choices=PriorityChoice,default=PriorityChoice.LOW)
     status = models.CharField(max_length=15, choices=StatusChoice, default=StatusChoice.PENDING)
     assigned_by = models.ForeignKey(User, related_name='assigned_tasks', on_delete=models.CASCADE,null=True)
@@ -94,4 +89,4 @@ class Attachment(models.Model):
     
   
     
->>>>>>> Stashed changes
+
