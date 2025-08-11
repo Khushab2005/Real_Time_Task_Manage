@@ -6,12 +6,6 @@ import os
 
 # Define Role choices
 class UserManager(BaseUserManager):
-    # Create a new user with the given email and password.
-    # The email must be normalized and unique.
-    # The role must be one of the choices defined in ROLE_CHOICES.
-    # The is_staff and is_active flags are set to False by default.
-    # The password is set using set_password method.
-    # The user is saved using the provided database.
     def create_user(self, name ,email, password):
         if not email:
             raise ValueError("Email is required")

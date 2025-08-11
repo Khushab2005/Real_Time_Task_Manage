@@ -34,22 +34,6 @@ class TaskSerializer(serializers.ModelSerializer):
         return attrs
     
     
-    
-    
-    # def validate(self, data):
-    #     request_user = self.context['request'].user
-    #     assigned_to = data.get('assigned_to')
-        
-    #     if request_user.role == Rolechoice.EMPLOYEE:
-    #         raise serializers.ValidationError("Employees cannot create tasks.")
-
-    #     if request_user.role == Rolechoice.ADMIN and assigned_to.role == Rolechoice.ADMIN:
-    #         raise serializers.ValidationError("Admin cannot assign tasks to another Admin.")
-
-    #     if request_user.role == Rolechoice.MANAGER and assigned_to.role != Rolechoice.EMPLOYEE:
-    #         raise serializers.ValidationError("Manager can only assign tasks to Employees.")
-    #     return data
-    
     def create(self,validated_data):
         request_user = self.context['request'].user
         validated_data['created_by']  = request_user
