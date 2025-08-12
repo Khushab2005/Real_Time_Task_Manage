@@ -22,14 +22,27 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = [ 'id' ,'title','file_of_task' ,'description', 'due_date', 'priority', 'status', 'assigned_to','created_by']
         read_only_fields = ['created_by', 'created_at']
         
-    def validate(self, attrs):
+    def validate(self, attrs ):
         request_user = self.context['request'].user
         assigned_to = attrs.get('assigned_to')
+        title = attrs.get('title')
+        
+        if Task.objects.filter(title = title).exists():
+            raise serializers.ValidationError("Title already exists.")
+            
+        
+        # Employee cannot assign or create tasks
+        if request_user.role == Rolechoice.EMPLOYEE:
+            raise serializers.ValidationError("Employees cannot assign or create tasks.")
 
         # Manager assigning a task
         if request_user.role == Rolechoice.MANAGER:
             if assigned_to and assigned_to.role != Rolechoice.EMPLOYEE:
                 raise serializers.ValidationError("Managers can only assign tasks to employees.")
+            
+        # Employee can not assign task 
+        
+            
 
         return attrs
     
@@ -81,6 +94,8 @@ class AttachmentSerializer(serializers.ModelSerializer):
             task = data.get('task')
             if not task:
                 raise serializers.ValidationError("Task is required.")
+            if Attachment.objects.filter(task=task).exists():
+                raise serializers.ValidationError("Attachment for this task already exists.")
             if request_user.role == Rolechoice.ADMIN:
                 raise serializers.ValidationError("Admins are not allowed to upload attachments.")
             if task.assigned_to != request_user:
