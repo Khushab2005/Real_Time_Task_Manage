@@ -40,9 +40,6 @@ class TaskSerializer(serializers.ModelSerializer):
             if assigned_to and assigned_to.role != Rolechoice.EMPLOYEE:
                 raise serializers.ValidationError("Managers can only assign tasks to employees.")
             
-        # Employee can not assign task 
-        
-            
 
         return attrs
     
