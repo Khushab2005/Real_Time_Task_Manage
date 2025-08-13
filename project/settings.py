@@ -46,8 +46,13 @@ INSTALLED_APPS = [
     'myapp.notifications',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
+    'channels',
+    
     
 ]
+
+ASGI_APPLICATION = 'project.asgi.application'
+
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -59,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'myapp.notifications.middleware.JWTAuthMiddleware',
 ]
 
 REST_FRAMEWORK = {
@@ -97,6 +103,8 @@ SIMPLE_JWT = {
 }
 
 WSGI_APPLICATION = 'project.wsgi.application'
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
 
 
 # Database
@@ -124,10 +132,17 @@ DATABASES = {
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.getenv('REDIS_URL'),
+        'LOCATION': 'redis://127.0.0.1:6379/1',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
+    }
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [("127.0.0.1", 6379)]},
     }
 }
 

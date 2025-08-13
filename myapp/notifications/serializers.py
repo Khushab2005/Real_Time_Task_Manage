@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from myapp.notifications.models import Notification
-
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 #------------------
 #Notification Serializers 
 #------------------
@@ -27,5 +28,24 @@ class NotificationSerializers(serializers.ModelSerializer):
         return attrs
     
     def create(self, validated_data):
-        data = Notification.objects.create(**validated_data)
-        return data    
+        request_user = self.context['request'].user
+        validated_data['sender'] = request_user  
+
+        notification = Notification.objects.create(**validated_data)
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"user_{notification.receiver.id}",
+            {
+                "type": "send_notification",
+                "content": {
+                    "id": notification.id,
+                    "message": notification.message,
+                    "notification_type": notification.notification_type,
+                    "is_read": notification.is_read,
+                },
+            }
+        )
+
+        return notification
+
