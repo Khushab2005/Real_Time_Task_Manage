@@ -2,6 +2,9 @@ from rest_framework import serializers
 from myapp.tasks.models import Task, Attachment
 from myapp.accounts.constants import Rolechoice
 from myapp.accounts.models import User
+from myapp.notifications.models import Notification
+from myapp.notifications.constants import NotificationType
+from myapp.notifications.tasks import send_email_task
 
 
 
@@ -44,10 +47,28 @@ class TaskSerializer(serializers.ModelSerializer):
         return attrs
     
     
-    def create(self,validated_data):
+    def create(self, validated_data):
         request_user = self.context['request'].user
-        validated_data['created_by']  = request_user
-        return Task.objects.create(**validated_data)
+        validated_data['created_by'] = request_user
+        task = Task.objects.create(**validated_data)
+
+        if task.assigned_to:
+            send_email_task.delay(
+                task.assigned_to.email,              # recipient email
+                "New Task Assigned",                 # subject
+                f"You have been assigned a new task: {task.title}"  # message
+            )
+
+            
+        # Create notification for assigned user
+        if task.assigned_to:
+            Notification.objects.create(
+                receiver=task.assigned_to,
+                sender=request_user,
+                notification_type=NotificationType.TASKS_ASSIGN,
+                message=task.title
+            )
+        return task
     
     
     

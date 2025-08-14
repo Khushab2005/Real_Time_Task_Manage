@@ -45,8 +45,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
         token = default_token_generator.make_token(user)
         activation_path = reverse('verify-email')
         activation_link = f"{self.context['request'].build_absolute_uri(activation_path)}?uid={uid}&token={token}"
-        #for this check the email and send the link
-        # print(activation_link)
         send_mail(
             subject="Verify your email",
             message=f"Click the link to verify your account: {activation_link}",

@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from myapp.accounts.constants import Rolechoice
 from rest_framework.exceptions import PermissionDenied
+from django.core.cache import cache
 
 # Create your views here.
 
@@ -22,11 +23,21 @@ class TaskCreateView(ListCreateAPIView):
     
     def get_queryset(self):
         request_user = self.request.user
+        chache_key = f"user_tasks_{request_user.id}"
+        
+        tasks = cache.get(chache_key)
+        
+        if tasks is not None:
+            return tasks
         if request_user.role == Rolechoice.ADMIN :
-            return Task.objects.all()
+            tasks = Task.objects.all()
         elif request_user.role == Rolechoice.MANAGER:
-            return Task.objects.filter(created_by=request_user)
-        return Task.objects.none() 
+            tasks = Task.objects.filter(created_by=request_user)
+        else :
+            tasks = Task.objects.none() 
+            
+        cache.set(chache_key, tasks, timeout=60*5)
+        return tasks    
     
     def perform_create(self, serializer):
         serializer.save()
@@ -42,15 +53,24 @@ class TaskAssignedView(ListCreateAPIView):
     
     def get_queryset(self):
         request_user = self.request.user
+        chache_key = f"user_tasks_{request_user.id}"
+        
+        tasks = cache.get(chache_key)
+        
+        if tasks is not None:
+            return tasks
+        
         if request_user.role == Rolechoice.ADMIN :
-            return Task.objects.none()
+            tasks =  Task.objects.none()
         elif request_user.role == Rolechoice.MANAGER:
-            return  Task.objects.filter(assigned_to=request_user)
+            tasks =   Task.objects.filter(assigned_to=request_user)
         elif request_user.role == Rolechoice.EMPLOYEE:
-            return Task.objects.filter(assigned_to=request_user)
-        return Task.objects.none() 
+            tasks =  Task.objects.filter(assigned_to=request_user)
+        else :
+            tasks = Task.objects.none() 
         
-        
+        cache.set(chache_key, tasks, timeout=60*5)
+        return tasks    
           
 # ----------------
 # Task Modify views
