@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<section class="welcome-banner text-center text-white d-flex align-items-center" style="height: 80vh;">
+  <div class="container">
+    <h1 class="display-3 animate-text mb-3">Welcome to <span class="text-warning">Pro-Coder</span></h1>
+    
+    <a href="{% url 'loginpage' %}" class="btn services ">Explore More</a>
+  </div>
+</section>
+
+{% endblock %}

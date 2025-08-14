@@ -4,7 +4,7 @@ from myapp.accounts.constants import Rolechoice
 from myapp.accounts.models import User
 from myapp.notifications.models import Notification
 from myapp.notifications.constants import NotificationType
-
+from myapp.notifications.tasks import send_email_task
 
 
 
@@ -52,6 +52,14 @@ class TaskSerializer(serializers.ModelSerializer):
         validated_data['created_by'] = request_user
         task = Task.objects.create(**validated_data)
 
+        if task.assigned_to:
+            send_email_task.delay(
+                task.assigned_to.email,              # recipient email
+                "New Task Assigned",                 # subject
+                f"You have been assigned a new task: {task.title}"  # message
+            )
+
+            
         # Create notification for assigned user
         if task.assigned_to:
             Notification.objects.create(

@@ -2,16 +2,19 @@ from rest_framework import serializers
 from myapp.notifications.models import Notification
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+
 #------------------
 #Notification Serializers 
 #------------------
 class NotificationSerializers(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source='sender.name', read_only=True)
     class Meta:
         model = Notification
         fields = [ 
             'id',
             'receiver',         
-            'sender',         
+            'sender',   
+            'sender_name',      
             'notification_type',         
             'message',      
             'is_read',   
@@ -27,25 +30,4 @@ class NotificationSerializers(serializers.ModelSerializer):
             raise serializers.ValidationError("Sender and Receiver cannot be the same user.")
         return attrs
     
-    def create(self, validated_data):
-        request_user = self.context['request'].user
-        validated_data['sender'] = request_user  
-
-        notification = Notification.objects.create(**validated_data)
-
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f"user_{notification.receiver.id}",
-            {
-                "type": "send_notification",
-                "content": {
-                    "id": notification.id,
-                    "message": notification.message,
-                    "notification_type": notification.notification_type,
-                    "is_read": notification.is_read,
-                },
-            }
-        )
-
-        return notification
 
