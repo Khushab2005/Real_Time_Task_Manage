@@ -20,58 +20,53 @@ class TaskCreateView(ListCreateAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         request_user = self.request.user
-        chache_key = f"user_tasks_{request_user.id}"
-        
-        tasks = cache.get(chache_key)
-        
+        cache_key = f"user_tasks_{request_user.id}"
+
+        tasks = cache.get(cache_key)
         if tasks is not None:
             return tasks
-        if request_user.role == Rolechoice.ADMIN :
+
+        if request_user.role == Rolechoice.ADMIN:
             tasks = Task.objects.all()
         elif request_user.role == Rolechoice.MANAGER:
             tasks = Task.objects.filter(created_by=request_user)
-        else :
-            tasks = Task.objects.none() 
-            
-        cache.set(chache_key, tasks, timeout=60*5)
-        return tasks    
-    
-    def perform_create(self, serializer):
-        serializer.save()
+        else:
+            tasks = Task.objects.none()
 
-      
+        cache.set(cache_key, tasks, timeout=60*5)
+        return tasks
+
+    def perform_create(self, serializer):
+        task = serializer.save(created_by=self.request.user)
+        # Clear cache so latest data is fetched next time
+        cache_key = f"user_tasks_{self.request.user.id}"
+        cache.delete(cache_key)
+        return task
+ 
 # ----------------
 # Task Assigned views
 # ----------------   
 class TaskAssignedView(ListCreateAPIView):
-    queryset = Task.objects.all()
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         request_user = self.request.user
-        chache_key = f"user_tasks_{request_user.id}"
-        
-        tasks = cache.get(chache_key)
-        
-        if tasks is not None:
-            return tasks
-        
-        if request_user.role == Rolechoice.ADMIN :
-            tasks =  Task.objects.none()
-        elif request_user.role == Rolechoice.MANAGER:
-            tasks =   Task.objects.filter(assigned_to=request_user)
-        elif request_user.role == Rolechoice.EMPLOYEE:
-            tasks =  Task.objects.filter(assigned_to=request_user)
-        else :
-            tasks = Task.objects.none() 
-        
-        cache.set(chache_key, tasks, timeout=60*5)
-        return tasks    
-          
+        cache_key = f"user_assigned_tasks_{request_user.id}"
+
+        task_ids = cache.get(cache_key)
+        if task_ids is not None:
+            return Task.objects.filter(id__in=task_ids)
+
+        # Show tasks assigned to the user
+        tasks = Task.objects.filter(assigned_to=request_user)
+
+        cache.set(cache_key, list(tasks.values_list("id", flat=True)), timeout=60*5)
+        return tasks
+
 # ----------------
 # Task Modify views
 # ----------------

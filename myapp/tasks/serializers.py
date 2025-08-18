@@ -30,14 +30,15 @@ class TaskSerializer(serializers.ModelSerializer):
         assigned_to = attrs.get('assigned_to')
         title = attrs.get('title')
         
+        if request_user.role == Rolechoice.ADMIN:
+            if assigned_to == request_user:
+                raise serializers.ValidationError("Admins cannot assign tasks to themselves.")
+
+        
         if Task.objects.filter(title = title).exists():
             raise serializers.ValidationError("Title already exists.")
             
-        
-        # Employee cannot assign or create tasks
-        if request_user.role == Rolechoice.EMPLOYEE:
-            raise serializers.ValidationError("Employees cannot assign or create tasks.")
-
+    
         # Manager assigning a task
         if request_user.role == Rolechoice.MANAGER:
             if assigned_to and assigned_to.role != Rolechoice.EMPLOYEE:

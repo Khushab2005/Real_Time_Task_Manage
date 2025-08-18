@@ -147,8 +147,8 @@ class PasswordResetRequestView(APIView):
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
                 token = default_token_generator.make_token(user)
                 reset_link = f"{request.build_absolute_uri(reverse('password-reset-confirm'))}?uid={uid}&token={token}"
-                #for this check the email and send the link
-                # print(uid,token,user)
+                # for this check the email and send the link
+                print(uid,token,user)
      
                 send_mail(
                     "Reset your password",
@@ -191,6 +191,3 @@ def loginpage(request):
 
 def dashboard(request):
     return render(request, 'dashboard.html')
-
-
-    return render(request, 'logout.html')
