@@ -3,6 +3,8 @@ import json
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from myapp.notifications.models import Notification
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class NotificationConsumer(AsyncWebsocketConsumer):
 
@@ -33,7 +35,9 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
         # Create notification in DB
         notification = await self.create_notification(receiver_id, message, notification_type)
-
+        if not notification:
+            await self.send(text_data=json.dumps({"error": f"Receiver with id={receiver_id} does not exist."}))
+            return
         # Send to receiver group
         await self.send_to_group(notification)
 
@@ -42,9 +46,13 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def create_notification(self, receiver_id, message, notification_type):
+        try:
+            receiver = User.objects.get(id=receiver_id)
+        except User.DoesNotExist:
+            return None 
         return Notification.objects.create(
             sender=self.user,
-            receiver_id=receiver_id,
+            receiver=receiver,
             message=message,
             notification_type=notification_type
         )

@@ -54,8 +54,8 @@ def task_file_upload_path(instance, filename):
 
 # Define User model here 
 class User(AbstractBaseUser, PermissionsMixin):
-    name = models.CharField(max_length=50, unique=True)
-    profile = models.ImageField(upload_to=task_file_upload_path, blank=True, null=True)
+    name = models.CharField(max_length=50)
+    profile = models.ImageField(upload_to=task_file_upload_path,default='Default_images/default.jpg', blank=True, null=True)
     email = models.EmailField(max_length=255, unique=True)
     role = models.CharField(max_length=10, choices=Rolechoice,default=Rolechoice.EMPLOYEE)
     is_staff = models.BooleanField(default=False)

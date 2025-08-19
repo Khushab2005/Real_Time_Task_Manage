@@ -57,14 +57,13 @@ class TaskAssignedView(ListCreateAPIView):
         request_user = self.request.user
         cache_key = f"user_assigned_tasks_{request_user.id}"
 
-        task_ids = cache.get(cache_key)
-        if task_ids is not None:
-            return Task.objects.filter(id__in=task_ids)
+        tasks = cache.get(cache_key)
+        if tasks is not None:
+            return tasks
 
         # Show tasks assigned to the user
         tasks = Task.objects.filter(assigned_to=request_user)
-
-        cache.set(cache_key, list(tasks.values_list("id", flat=True)), timeout=60*5)
+        cache.set(cache_key, tasks, timeout=60*5)
         return tasks
 
 # ----------------

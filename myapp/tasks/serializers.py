@@ -25,29 +25,31 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = [ 'id' ,'title','file_of_task' ,'description', 'due_date', 'priority', 'status', 'assigned_to','created_by']
         read_only_fields = ['created_by', 'created_at']
         
-    def validate(self, attrs ):
+    def validate(self, attrs):
         request_user = self.context['request'].user
         assigned_to = attrs.get('assigned_to')
         title = attrs.get('title')
-        
-        if request_user.role == Rolechoice.ADMIN:
-            if assigned_to == request_user:
-                raise serializers.ValidationError("Admins cannot assign tasks to themselves.")
 
-        
-        if Task.objects.filter(title = title).exists():
-            raise serializers.ValidationError("Title already exists.")
-            
-    
-        # Manager assigning a task
-        if request_user.role == Rolechoice.MANAGER:
-            if assigned_to and assigned_to.role != Rolechoice.EMPLOYEE:
-                raise serializers.ValidationError("Managers can only assign tasks to employees.")
-            
+        if self.instance is None:  
+            if request_user.role == Rolechoice.EMPLOYEE:
+                raise serializers.ValidationError("Employees are not allowed to create tasks.")
+
+          
+            if request_user.role == Rolechoice.ADMIN:
+                if assigned_to == request_user:
+                    raise serializers.ValidationError("Admins cannot assign tasks to themselves.")
+
+           
+            if Task.objects.filter(title=title).exists():
+                raise serializers.ValidationError("Title already exists.")
+
+          
+            if request_user.role == Rolechoice.MANAGER:
+                if assigned_to and assigned_to.role != Rolechoice.EMPLOYEE:
+                    raise serializers.ValidationError("Managers can only assign tasks to employees.")
 
         return attrs
-    
-    
+
     def create(self, validated_data):
         request_user = self.context['request'].user
         validated_data['created_by'] = request_user
