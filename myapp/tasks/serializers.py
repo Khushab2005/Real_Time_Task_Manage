@@ -2,6 +2,9 @@ from rest_framework import serializers
 from myapp.tasks.models import Task, Attachment
 from myapp.accounts.constants import Rolechoice
 from myapp.accounts.models import User
+from myapp.notifications.models import Notification
+from myapp.notifications.constants import NotificationType
+from myapp.notifications.tasks import send_email_task
 
 
 
@@ -22,32 +25,53 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = [ 'id' ,'title','file_of_task' ,'description', 'due_date', 'priority', 'status', 'assigned_to','created_by']
         read_only_fields = ['created_by', 'created_at']
         
-    def validate(self, attrs ):
+    def validate(self, attrs):
         request_user = self.context['request'].user
         assigned_to = attrs.get('assigned_to')
         title = attrs.get('title')
-        
-        if Task.objects.filter(title = title).exists():
-            raise serializers.ValidationError("Title already exists.")
-            
-        
-        # Employee cannot assign or create tasks
-        if request_user.role == Rolechoice.EMPLOYEE:
-            raise serializers.ValidationError("Employees cannot assign or create tasks.")
 
-        # Manager assigning a task
-        if request_user.role == Rolechoice.MANAGER:
-            if assigned_to and assigned_to.role != Rolechoice.EMPLOYEE:
-                raise serializers.ValidationError("Managers can only assign tasks to employees.")
-            
+        if self.instance is None:  
+            if request_user.role == Rolechoice.EMPLOYEE:
+                raise serializers.ValidationError("Employees are not allowed to create tasks.")
+
+          
+            if request_user.role == Rolechoice.ADMIN:
+                if assigned_to == request_user:
+                    raise serializers.ValidationError("Admins cannot assign tasks to themselves.")
+
+           
+            if Task.objects.filter(title=title).exists():
+                raise serializers.ValidationError("Title already exists.")
+
+          
+            if request_user.role == Rolechoice.MANAGER:
+                if assigned_to and assigned_to.role != Rolechoice.EMPLOYEE:
+                    raise serializers.ValidationError("Managers can only assign tasks to employees.")
 
         return attrs
-    
-    
-    def create(self,validated_data):
+
+    def create(self, validated_data):
         request_user = self.context['request'].user
-        validated_data['created_by']  = request_user
-        return Task.objects.create(**validated_data)
+        validated_data['created_by'] = request_user
+        task = Task.objects.create(**validated_data)
+
+        if task.assigned_to:
+            send_email_task.delay(
+                task.assigned_to.email,              # recipient email
+                "New Task Assigned",                 # subject
+                f"You have been assigned a new task: {task.title}"  # message
+            )
+
+            
+        # Create notification for assigned user
+        if task.assigned_to:
+            Notification.objects.create(
+                receiver=task.assigned_to,
+                sender=request_user,
+                notification_type=NotificationType.TASKS_ASSIGN,
+                message=task.title
+            )
+        return task
     
     
     

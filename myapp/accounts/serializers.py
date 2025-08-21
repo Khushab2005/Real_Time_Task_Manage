@@ -6,6 +6,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.urls import reverse
 from myapp.accounts.constants import Rolechoice
+from myapp.accounts.utils.email_varify import is_valid_email
 
 # Create User Serializer
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -18,6 +19,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         request_user = self.context['request'].user
         role = attrs.get('role')
+        email = attrs.get('email')
+        
+        
 
         if role == Rolechoice.ADMIN:
             raise serializers.ValidationError("You do not have permission to create an admin.")
@@ -27,10 +31,16 @@ class UserCreateSerializer(serializers.ModelSerializer):
         
         if request_user.role == Rolechoice.EMPLOYEE:
             raise serializers.ValidationError("Employees cannot create users.")
-
+        
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError("Email already exists.")
+        
+        if not is_valid_email(email):
+            raise serializers.ValidationError("Email is not valid.")
+    
         return attrs
 
-    def create(self, validated_data):
+    def create(self, validated_data): 
         password = validated_data.pop('password')
         user = User(**validated_data)
         user.set_password(password)
@@ -45,8 +55,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
         token = default_token_generator.make_token(user)
         activation_path = reverse('verify-email')
         activation_link = f"{self.context['request'].build_absolute_uri(activation_path)}?uid={uid}&token={token}"
-        #for this check the email and send the link
-        # print(activation_link)
         send_mail(
             subject="Verify your email",
             message=f"Click the link to verify your account: {activation_link}",

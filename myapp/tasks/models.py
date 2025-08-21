@@ -53,10 +53,10 @@ class Attachment(models.Model):
     attach_file = models.FileField(upload_to=task_file_upload_path_name, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, related_name='attachments_received', on_delete=models.CASCADE)
+    
     def __str__(self):
-        return self.title
-    
-    
+        return f"{self.task} - {self.created_at}"  
+
 
 
     
