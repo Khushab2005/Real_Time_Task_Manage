@@ -65,6 +65,14 @@ class TaskAssignedView(ListCreateAPIView):
         tasks = Task.objects.filter(assigned_to=request_user)
         cache.set(cache_key, tasks, timeout=60*5)
         return tasks
+    
+    def perform_create(self, serializer):
+            task = serializer.save(assigned_to=self.request.user)
+            # Clear cache so latest data is fetched next time
+            cache_key = f"user_tasks_{self.request.user.id}"
+            cache.delete(cache_key)
+            return task
+    
 
 # ----------------
 # Task Modify views
@@ -89,21 +97,22 @@ class TaskModifyView(RetrieveUpdateAPIView):
     
         
     def perform_update(self, serializer):
-        request_user = self.request.user
-        instance = self.get_object()
+        task = serializer.save()
 
-        if request_user.role == Rolechoice.EMPLOYEE:
-            # Allow only if they are assigned or the creator
-            if instance.created_by != request_user and instance.assigned_to != request_user:
-                raise PermissionDenied("You do not have permission to update this task.")
+        # Clear cache for creator
+        cache.delete(f"user_tasks_{task.created_by.id}")
 
-            # Restrict to only status updates
-            allowed_fields = ['status']
-            for field in serializer.validated_data.keys():
-                if field not in allowed_fields:
-                    raise PermissionDenied("You can only update the status of the task.")
+        # Clear cache for assigned user (both task lists and assigned view)
+        if task.assigned_to:
+            cache.delete(f"user_tasks_{task.assigned_to.id}")
+            cache.delete(f"user_assigned_tasks_{task.assigned_to.id}")
 
-        serializer.save()
+        # Clear cache for all admins
+        for admin in User.objects.filter(role=Rolechoice.ADMIN):
+            cache.delete(f"user_tasks_{admin.id}")
+
+        return task
+
 
  #
    
