@@ -21,9 +21,6 @@ class NotificationListView(ListAPIView):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        request_user = self.request.user
-        if request_user.role == Rolechoice.ADMIN:
-            return Notification.objects.all() 
         return Notification.objects.filter(receiver= self.request.user)
     
     

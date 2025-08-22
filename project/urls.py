@@ -25,4 +25,5 @@ urlpatterns = [
     path('api/accounts/', include('myapp.accounts.urls')),
     path('notifications/', include('myapp.notifications.urls')),
     path('tasks/', include('myapp.tasks.urls')),
+    path('chats/', include('myapp.chats.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

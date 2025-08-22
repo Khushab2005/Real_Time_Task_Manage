@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'myapp.accounts',
     'myapp.tasks',
     'myapp.notifications',
+    'myapp.chats',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'channels',

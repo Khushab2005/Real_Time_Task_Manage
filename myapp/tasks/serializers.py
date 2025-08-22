@@ -80,17 +80,60 @@ class TaskSerializer(serializers.ModelSerializer):
 
         # Creator can update everything
         if instance.created_by == request_user:
-            return super().update(instance, validated_data)
+            updated_instance = super().update(instance, validated_data)
+
+            if instance.assigned_to:
+                send_email_task.delay(
+                    instance.assigned_to.email,
+                    "Task Updated",
+                    f"Task '{instance.title}' has been updated by {request_user.name}."
+                )
+
+            if instance.created_by:
+                send_email_task.delay(
+                    instance.created_by.email,
+                    "Task Updated",
+                    f"Task '{instance.title}' has been updated by {request_user.name}."
+                )
+
+            return updated_instance
         
         # Admin can update everything
         elif request_user.role == Rolechoice.ADMIN:
-            return super().update(instance, validated_data)
+            updated_instance = super().update(instance, validated_data)
+
+            if instance.assigned_to:
+                send_email_task.delay(
+                    instance.assigned_to.email,
+                    "Task Updated",
+                    f"Task '{instance.title}' has been updated by Admin."
+                )
+
+            if instance.created_by:
+                send_email_task.delay(
+                    instance.created_by.email,
+                    "Task Updated",
+                    f"Task '{instance.title}' has been updated by Admin."
+                )
+
+            return updated_instance
+
 
         # Assigned user can only update status
         elif instance.assigned_to == request_user:
             allowed_fields = ['status']
             if not all(field in allowed_fields for field in validated_data.keys()):
                 raise serializers.ValidationError("You can only update the status of this task.")
+            send_email_task.delay(
+                instance.assigned_to.email,         
+                "Task Updated",             
+                f"Task: {instance.title} has been updated and status has been {instance.status}" 
+            )
+            send_email_task.delay(
+                instance.created_by.email,
+                "Task Updated",
+                f"Task: {instance.title} has been updated and status has been {instance.status}"
+            )
             return super().update(instance, validated_data)
 
         # Nobody else can update
