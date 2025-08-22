@@ -1,83 +1,158 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <div class="container mt-200" style="margin-top: 150px; margin-bottom: 150px">
-    <div class="row">
-      
-      <!-- Left Sidebar: Create Chat Room + Chat Room List -->
-      <div class="col-md-4 mb-4">
-        
-        <!-- Create Chat Room -->
-        <div class="card shadow-lg p-4 mb-4">
-          <h4 class="mb-3">Create Chat Room</h4>
+<div class="container mt-200" style="margin-top: 150px; margin-bottom: 150px">
+  <div class="row">
 
-          <div class="mb-3">
-            <label class="form-label">Room Name</label>
-            <input type="text" class="form-control" placeholder="Enter room name">
-          </div>
+    <!-- Left Sidebar: Create Chat Room + Chat Room List -->
+    <div class="col-md-4 mb-4">
+      <form id="create_room_form">
+      <!-- Create Chat Room -->
+      <div class="card shadow-lg p-4 mb-4">
+        <h4 class="mb-3">Create Chat Room</h4>
 
-          <!-- Multi-select with search -->
-          <div class="mb-3">
-            <label class="form-label">Select Users</label>
-            <select class="form-select users-select" multiple="multiple">
-              <option value="1">John Doe</option>
-              <option value="2">Jane Smith</option>
-              <option value="3">Michael Johnson</option>
-              <option value="4">Emily Davis</option>
-              <option value="5">Chris Wilson</option>
-            </select>
-          </div>
-
-          <button class="btn btn-primary w-100">Create Room</button>
+        <div class="mb-3">
+          <label class="form-label">Room Name</label>
+          <input type="text" class="form-control" placeholder="Enter room name" id="name">
         </div>
 
-        <!-- Chat Rooms List -->
-        <div class="card shadow-sm">
-          <div class="card-header bg-secondary text-white">Chat Rooms</div>
-          <ul class="list-group list-group-flush">
-            <li class="list-group-item">Room 1</li>
-            <li class="list-group-item">Room 2</li>
-            <li class="list-group-item">Room 3</li>
-          </ul>
+        <!-- Multi-select with search -->
+        <div class="mb-3">
+          <label class="form-label">Select Users</label>
+          <select class="form-select users-select" multiple="multiple">
+            {% for i in data %}
+            <option value="{{ i.id }}">{{ i.name }}</option>
+            {% endfor %}
+          </select>
         </div>
+
+        <button type="submit" class="btn btn-primary w-100">Create Room</button>
       </div>
+      </form>
 
-      <!-- Right Side: Chat Window -->
-      <div class="col-md-8">
-        <div class="card shadow-sm">
-          <div class="card-header bg-success text-white">Chat Room: Room 1</div>
-          <div class="card-body" style="height: 400px; overflow-y: auto; background: #f9f9f9;">
-            <div class="d-flex mb-3">
-              <div class="p-2 bg-primary text-white rounded-3">Hello! How are you?</div>
-            </div>
-            <div class="d-flex justify-content-end mb-3">
-              <div class="p-2 bg-light border rounded-3">I'm good, thanks!</div>
-            </div>
-            <div class="d-flex mb-3">
-              <div class="p-2 bg-primary text-white rounded-3">Great to hear!</div>
-            </div>
+      <!-- Chat Rooms List -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white">Chat Rooms</div>
+        <ul class="list-group list-group-flush" id="room_list">
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right Side: Chat Window -->
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">Chat Room: Room 1</div>
+        <div class="card-body" style="height: 400px; overflow-y: auto; background: #f9f9f9;">
+          <div class="d-flex mb-3">
+            <div class="p-2 bg-primary text-white rounded-3">Hello! How are you?</div>
           </div>
-          <div class="card-footer">
-            <div class="input-group">
-              <input type="text" class="form-control" placeholder="Type your message...">
-              <button class="btn btn-success">Send</button>
-            </div>
+          <div class="d-flex justify-content-end mb-3">
+            <div class="p-2 bg-light border rounded-3">I'm good, thanks!</div>
+          </div>
+          <div class="d-flex mb-3">
+            <div class="p-2 bg-primary text-white rounded-3">Great to hear!</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="Type your message...">
+            <button class="btn btn-success">Send</button>
           </div>
         </div>
       </div>
+    </div>
 
-    </div> <!-- row end -->
-  </div> <!-- container end -->
+  </div> <!-- row end -->
+</div> <!-- container end -->
 
 
-  <script>
-    // Activate Select2
-    $(document).ready(function () {
-      $('.users-select').select2({
-        placeholder: "Search and select users",
-        allowClear: true,
-        width: '100%'
-      });
+<script>
+  // Activate Select2
+  $(document).ready(function () {
+    $('.users-select').select2({
+      placeholder: "Search and select users",
+      allowClear: true,
+      width: '100%'
     });
-  </script>
+  });
+
+  // List Rooms chats
+  let allrooms = [];
+  async function list_rooms() {
+    const accessToken = localStorage.getItem('access_token');
+    console.log(accessToken);
+    const room_list = document.getElementById('room_list');
+    room_list.innerHTML = ' ';
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/chats/chatroomlist/', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + accessToken,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      console.log(data);
+      console.log(response);
+
+      if (response.ok) {
+        allrooms = data;
+        renderRooms(allrooms);
+      } else {
+        console.error('Error fetching rooms:', data);
+      }
+
+    }
+    catch (error) {
+      console.error('Error fetching rooms:', error);
+    }
+
+  }
+
+  // Render rooms
+  function renderRooms(rooms) {
+    const roomList = document.getElementById('room_list');
+    roomList.innerHTML = ''; // clear old list
+
+    rooms.forEach(room => {
+      const listItem = document.createElement('li');
+      listItem.classList.add('list-group-item');
+      listItem.textContent = room.name;
+      roomList.appendChild(listItem);   // ✅ append
+    });
+  }
+
+  // Call the function
+  list_rooms();
+
+
+document.getElementById('create_room_form').addEventListener("submit",async function(e){
+    e.preventDefault();
+    const name = document.getElementById('name').value;
+    const users = Array.from(document.querySelectorAll('.users-select option:checked')).map(option => option.value);
+    console.log(name, users);
+    const accessToken = localStorage.getItem('access_token');
+    try {
+      const response = await fetch("http://127.0.0.1:8000/chats/chatroomlist/",{
+      method : "POST",
+      headers : {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + accessToken
+      },
+      body : JSON.stringify({name , users})
+    });
+  }
+  
+    catch (error) {
+      console.error('Error creating room:', error);
+    }
+  });
+
+
+  
+
+
+</script>
 {% endblock %}
