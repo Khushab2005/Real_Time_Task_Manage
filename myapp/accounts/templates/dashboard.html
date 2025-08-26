@@ -65,6 +65,10 @@
             });
 
             const data = await response.json();
+            data.forEach(e => {
+                console.log(e);
+                localStorage.setItem("receiver", e.receiver_name);
+            })
 
             if (response.ok){
                 allnotification = data;

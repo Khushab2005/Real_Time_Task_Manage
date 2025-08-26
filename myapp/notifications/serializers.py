@@ -8,13 +8,15 @@ from channels.layers import get_channel_layer
 #------------------
 class NotificationSerializers(serializers.ModelSerializer):
     sender_name = serializers.CharField(source='sender.name', read_only=True)
+    receiver_name = serializers.CharField(source='receiver.name', read_only=True)
     class Meta:
         model = Notification
         fields = [ 
             'id',
             'receiver',         
             'sender',   
-            'sender_name',      
+            'sender_name', 
+            'receiver_name',     
             'notification_type',         
             'message',      
             'is_read',   
