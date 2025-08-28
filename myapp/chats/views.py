@@ -82,3 +82,64 @@ class AllUsersView(APIView):
         data = User.objects.all()
         context = [{"id": user.id, "name": user.name} for user in data]
         return Response(context, status=status.HTTP_200_OK)
+    
+    
+# chats rooom detail view
+class chatroomdelete(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, room_id):
+        try:
+            room = ChatRoom.objects.get(id=room_id)
+        except ChatRoom.DoesNotExist:
+            return Response({"error": "Room not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user not in room.participants.all():
+            return Response({"error": "You are not a participant of this room"}, status=status.HTTP_403_FORBIDDEN)
+        
+        if room.created_by != request.user:
+            return Response({"error": "Only the creator can delete this room"}, status=status.HTTP_403_FORBIDDEN)
+        
+        room.delete()
+        return Response({"msg": "Room deleted successfully."},status=status.HTTP_204_NO_CONTENT)
+    
+    
+    
+
+
+# chatroom update view 
+class chatmessageupdate(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, chat_id):
+        try:
+            room = Message.objects.get(id=chat_id)
+        except Message.DoesNotExist:
+            return Response({"error": "Room not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = MessageSerializer(room, data=request.data, context={"request": request})
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    
+# chatroom delete view
+class chatmessagedelete(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, chat_id):
+        try:
+            room = Message.objects.get(id=chat_id)
+        except Message.DoesNotExist:
+            return Response({"error": "Room not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if room.sender != request.user:
+            return Response({"error": "Only the sender can delete this message"}, status=status.HTTP_403_FORBIDDEN)
+        
+        room.delete()
+        return Response({"msg": "Message deleted successfully."},status=status.HTTP_204_NO_CONTENT)
+
+

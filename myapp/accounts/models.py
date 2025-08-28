@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser , BaseUserManager , PermissionsMixin
 from myapp.accounts.constants import Rolechoice
 import os
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+from django.db.models.signals import pre_save
 # Create your models here.
 
 # Define Role choices
@@ -68,3 +71,30 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.name}"
     
     
+    
+# delete profile image from filesystem when user is deleted
+@receiver(post_delete, sender=User)
+def delete_profile_image_on_user_delete(sender, instance, **kwargs):
+    if instance.profile and instance.profile.name != 'Default_images/default.jpg':
+        if os.path.isfile(instance.profile.path):
+            os.remove(instance.profile.path)
+            
+            
+# update profile image and delete old image from filesystem
+@receiver(pre_save, sender=User)
+def delete_old_profile_image_on_update(sender, instance, **kwargs):
+    if not instance.pk:
+        return False  # New user, no old image yet
+
+    try:
+        old_instance = User.objects.get(pk=instance.pk)
+    except User.DoesNotExist:
+        return False
+
+    old_file = old_instance.profile
+    new_file = instance.profile
+
+    if old_file and old_file != new_file and old_file.name != 'Default_images/default.jpg':
+        if os.path.isfile(old_file.path):
+            os.remove(old_file.path)
+

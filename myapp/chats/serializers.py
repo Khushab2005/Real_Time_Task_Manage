@@ -55,6 +55,19 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         chatroom.participants.set(all_users)
 
         return chatroom
+    
+    def update(self, instance, validated_data):
+        request_user = self.context["request"].user
+
+        if request_user != instance.created_by:
+            raise serializers.ValidationError("Only the creator can update this room.")
+        
+        
+        return super().update(instance, validated_data)
+        
+        
+
+        
 
 
     def get_participants(self, obj):
@@ -67,3 +80,17 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ['id', 'sender', 'room','content', 'timestamp']
+        read_only_fields = ['id', 'sender', 'room', 'timestamp']
+        
+    def update(self, instance, validated_data):
+        # only require content to update
+        request_user = self.context['request'].user
+        
+        if instance.sender == request_user:
+            instance.content = validated_data.get('content', instance.content)
+            instance.save()
+        else:
+            raise serializers.ValidationError("You can only update your own messages.")
+        
+    
+        return instance
